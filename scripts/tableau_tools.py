@@ -13,7 +13,7 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from tableau_client import TableauClient
+from clients import TableauClient
 from config import TABLEAU_CONFIG
 
 

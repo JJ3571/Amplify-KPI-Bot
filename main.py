@@ -9,9 +9,10 @@ import argparse
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from connection_checker import ConnectionChecker
-from kpi_aggregator import KPIAggregator
-from excel_generator import ExcelGenerator
+from clients import ConnectionChecker
+from core import KPIAggregator
+from exporters import ExcelGenerator
+from utils import get_last_week_dates
 
 # Configure logging
 logging.basicConfig(
@@ -22,22 +23,6 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
-
-
-def get_last_week_dates():
-    """
-    Get the start and end dates for last week (Sunday to Saturday)
-    
-    Returns:
-        tuple: (start_date, end_date) as datetime objects
-    """
-    today = datetime.now()
-    # Find last Sunday
-    days_since_sunday = (today.weekday() + 1) % 7  # Monday = 0, Sunday = 6
-    last_sunday = today - timedelta(days=days_since_sunday + 7)
-    last_saturday = last_sunday + timedelta(days=6)
-    
-    return last_sunday, last_saturday
 
 
 class AmplifyKPIBot:
@@ -325,6 +310,10 @@ Examples:
                        help='Check connection status and exit')
     parser.add_argument('--quiet', action='store_true',
                        help='Quiet mode - minimal output (for cron jobs)')
+    parser.add_argument('--update-sheets', action='store_true',
+                       help='Update Google Sheets with KPI data')
+    parser.add_argument('--generate-dataframes', action='store_true',
+                       help='Generate comprehensive dataframes with scores and agent info')
     
     args = parser.parse_args()
     
@@ -334,6 +323,26 @@ Examples:
         results = checker.check_all_connections()
         checker.print_status_report()
         return
+    
+    # Update sheets mode
+    if args.update_sheets or args.generate_dataframes:
+        from update_kpi_sheets import update_kpi_calculator_for_last_week
+        
+        results = update_kpi_calculator_for_last_week(
+            update_sheets=args.update_sheets,
+            save_dataframe=args.generate_dataframes
+        )
+        
+        if results['success']:
+            print("\n✅ Update Complete!")
+            print(f"Agents Updated: {results['agents_updated']}")
+            print(f"Data Sources: {', '.join(results['data_sources_used'])}")
+            if results.get('dataframe_path'):
+                print(f"Dataframe: {results['dataframe_path']}")
+        else:
+            print(f"\n❌ Update Failed: {results['message']}")
+        
+        exit(0 if results['success'] else 1)
     
     # Parse week argument
     week_start = None

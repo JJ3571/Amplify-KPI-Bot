@@ -8,9 +8,9 @@ from datetime import datetime, timedelta
 from typing import Optional, Tuple
 import pandas as pd
 
-from sheets_client import GoogleSheetsClient
-from config import GOOGLE_SHEETS_CONFIG, DATA_PATHS, GENERAL_DEFALTS
-
+from .sheets_client import GoogleSheetsClient
+from config import GOOGLE_SHEETS_CONFIG, DATA_PATHS
+from utils import get_week_boundaries
 
 # Configure logging
 logging.basicConfig(
@@ -18,48 +18,6 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
-
-
-def get_week_boundaries(
-    reference_date: Optional[datetime] = None,
-    week_start: str = GENERAL_DEFALTS['week_start_day'],
-    week_end: str = GENERAL_DEFALTS['week_end_day']
-) -> Tuple[datetime, datetime]:
-    """
-    Get the start and end dates for a week
-    
-    Args:
-        reference_date: Date to calculate week for (defaults to today)
-        week_start: Day of week that starts the week (e.g., 'Sunday')
-        week_end: Day of week that ends the week (e.g., 'Saturday')
-    
-    Returns:
-        Tuple of (week_start_date, week_end_date)
-    """
-    if reference_date is None:
-        reference_date = datetime.now()
-    
-    # Map day names to weekday numbers (0=Monday, 6=Sunday)
-    day_map = {
-        'Monday': 0, 'Tuesday': 1, 'Wednesday': 2, 'Thursday': 3,
-        'Friday': 4, 'Saturday': 5, 'Sunday': 6
-    }
-    
-    start_day_num = day_map[week_start]
-    end_day_num = day_map[week_end]
-    
-    # Get current weekday (0=Monday, 6=Sunday)
-    current_weekday = reference_date.weekday()
-    
-    # Calculate days to subtract to get to week start
-    days_to_start = (current_weekday - start_day_num) % 7
-    week_start_date = reference_date - timedelta(days=days_to_start)
-    
-    # Calculate days to add to get to week end
-    days_to_end = (end_day_num - start_day_num) % 7
-    week_end_date = week_start_date + timedelta(days=days_to_end)
-    
-    return week_start_date, week_end_date
 
 
 def parse_date_header(header_value: str) -> Optional[datetime]:

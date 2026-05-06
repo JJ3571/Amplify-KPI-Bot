@@ -8,13 +8,16 @@ import sys
 import pandas as pd
 from pathlib import Path
 
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 def test_imports():
     """Test that all modules import correctly"""
     print("Testing imports...")
     try:
         from main import KPIBot
-        from kpi_calculator import KPICalculator
-        from file_handler import FileHandler
+        from core import KPICalculator
+        from core import FileHandler
         from config import DEFAULT_WEIGHTS, SCORING_THRESHOLDS
         print("✅ All imports successful")
         return True
@@ -26,7 +29,7 @@ def test_kpi_calculator():
     """Test KPI calculator with sample data"""
     print("\nTesting KPI Calculator...")
     try:
-        from kpi_calculator import KPICalculator
+        from core import KPICalculator
         
         calculator = KPICalculator()
         

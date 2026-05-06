@@ -193,8 +193,7 @@ TABLEAU_CONFIG = {
 
 ### Last Week's Data
 ```python
-from support_agent_audits import get_last_week_agent_scores
-from support_services_kpi import get_csat_scores, get_response_times
+from core import get_last_week_agent_scores, get_csat_scores, get_response_times
 
 # QA scores
 qa = get_last_week_agent_scores()
@@ -207,7 +206,7 @@ phone = get_response_times('phone')
 
 ### Multi-Week Trends
 ```python
-from support_agent_audits import get_multi_week_agent_scores
+from core import get_multi_week_agent_scores
 
 # Get 4 weeks of QA data
 qa_4weeks = get_multi_week_agent_scores(num_weeks=4)
@@ -215,7 +214,7 @@ qa_4weeks = get_multi_week_agent_scores(num_weeks=4)
 
 ### Custom Date Range
 ```python
-from support_agent_audits import get_agent_audits_data
+from core import get_agent_audits_data
 from datetime import datetime
 
 start = datetime(2025, 9, 1)
@@ -229,29 +228,54 @@ qa_september = get_agent_audits_data(week_start=start, week_end=end)
 
 ```
 Amplify-KPI-Bot/
-├── data/                           # All data storage
+├── clients/                        # API clients & integrations
+│   ├── tableau_client.py           # Tableau REST API client
+│   ├── salesforce_client.py        # Salesforce client
+│   ├── gdrive_importer.py          # Google Drive importer
+│   └── connection_checker.py       # Connection health checker
+│
+├── sheets/                         # Google Sheets integration
+│   ├── sheets_client.py            # Google Sheets API client
+│   ├── sheets_updater.py           # Sheets data writer
+│   └── sla_cases.py                # SLA data from Sheets
+│
+├── core/                           # Core business logic
+│   ├── kpi_calculator.py           # KPI scoring engine
+│   ├── kpi_aggregator.py           # Data aggregation
+│   ├── named_functions.py          # Excel formula equivalents
+│   ├── support_agent_audits.py     # QA data retrieval
+│   ├── support_services_kpi.py     # KPI data retrieval
+│   └── data_importer.py            # CSV data processing
+│
+├── models/                         # Data models
+│   └── agent_info_manager.py       # Agent metadata manager
+│
+├── exporters/                      # Output generation
+│   ├── excel_generator.py          # Excel workbook generator
+│   ├── scorecard_generator.py      # Agent scorecard generator
+│   └── dataframe_generator.py      # Comprehensive dataframes
+│
+├── data/                           # Data storage
 │   ├── qa/                         # QA audit data
 │   ├── kpi/                        # KPI metrics
 │   ├── exports/                    # Other exports
 │   └── archive/                    # Historical data
 │
 ├── scripts/                        # Utility scripts
-│   ├── tableau_tools.py            # Unified Tableau testing
+│   ├── tableau_tools.py            # Tableau testing/diagnostics
 │   ├── find_tableau_content.py     # Search tool
+│   ├── validate_system.py          # System validation
 │   └── ...
 │
-├── Core Modules
-│   ├── main.py                     # Main application
-│   ├── config.py                   # Configuration
-│   ├── tableau_client.py           # Tableau API client
-│   ├── support_agent_audits.py     # QA data retrieval
-│   ├── support_services_kpi.py     # KPI data retrieval
-│   └── ...
-│
-└── Documentation
-    ├── README.md                   # This file
-    ├── DOCS.md                     # Complete documentation
-    └── requirements.txt            # Dependencies
+├── Root Files (Entry Points & Config)
+│   ├── app.py                      # Streamlit web interface
+│   ├── main.py                     # CLI entry point
+│   ├── update_kpi_sheets.py        # Workflow orchestrator
+│   ├── config.py                   # Global configuration
+│   ├── utils.py                    # General utilities
+│   ├── README.md                   # This file
+│   ├── DOCS.md                     # Detailed documentation
+│   └── requirements.txt            # Dependencies
 ```
 
 ---

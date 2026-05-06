@@ -10,6 +10,9 @@ import pandas as pd
 from pathlib import Path
 import logging
 
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -21,16 +24,16 @@ def test_imports():
         import config
         print("   ✅ config.py imported successfully")
         
-        from data_importer import DataImporter
+        from core import DataImporter
         print("   ✅ data_importer.py imported successfully")
         
-        from named_functions import NamedFunctions
+        from core import NamedFunctions
         print("   ✅ named_functions.py imported successfully")
         
-        from kpi_calculator import AmplifyKPICalculator
+        from core import AmplifyKPICalculator
         print("   ✅ kpi_calculator.py imported successfully")
         
-        from scorecard_generator import ScorecardGenerator
+        from exporters import ScorecardGenerator
         print("   ✅ scorecard_generator.py imported successfully")
         
         from main import AmplifyKPIBot
@@ -146,7 +149,7 @@ def test_named_functions():
     print("\n🧪 Testing Named Functions...")
     
     try:
-        from named_functions import NamedFunctions
+        from core import NamedFunctions
         
         # Create sample agent data
         sample_agent_data = {
@@ -195,7 +198,7 @@ def test_kpi_calculator():
     print("\n🧪 Testing KPI Calculator...")
     
     try:
-        from kpi_calculator import AmplifyKPICalculator
+        from core import AmplifyKPICalculator
         from config import DEFAULT_WEIGHTS
         
         # Create sample agent data

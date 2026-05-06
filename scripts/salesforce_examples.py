@@ -3,7 +3,11 @@ Salesforce Data Retrieval Examples
 Shows how to use the OAuth-enabled Salesforce client to query data
 """
 
-from salesforce_client import SalesforceClient
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from clients import SalesforceClient
 from datetime import datetime, timedelta
 import pandas as pd
 

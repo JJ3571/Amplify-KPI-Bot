@@ -12,6 +12,7 @@ from typing import Dict, List, Optional
 import xml.etree.ElementTree as ET
 from io import StringIO
 import re
+from config import TABLEAU_CONFIG
 
 class TableauClient:
     """Client for Tableau REST API data access"""
@@ -89,7 +90,8 @@ class TableauClient:
         logging.info(f"Connecting to Tableau: {self.server_url}, Site: {self.site_name or '(default)'}")
         
         # Authentication endpoint
-        auth_url = f"{self.server_url}/api/3.19/auth/signin"
+        api_version = TABLEAU_CONFIG.get('api_version', '3.19')
+        auth_url = f"{self.server_url}/api/{api_version}/auth/signin"
         
         # Build authentication XML payload
         auth_payload = f"""
@@ -160,12 +162,13 @@ class TableauClient:
         
         all_workbooks = []
         page_number = 1
-        page_size = 100
+        page_size = TABLEAU_CONFIG.get('page_size', 100)
+        api_version = TABLEAU_CONFIG.get('api_version', '3.19')
         ns = {'t': 'http://tableau.com/api'}
         
         try:
             while True:
-                url = f"{self.server_url}/api/3.19/sites/{self.site_id}/workbooks"
+                url = f"{self.server_url}/api/{api_version}/sites/{self.site_id}/workbooks"
                 params = {'pageSize': page_size, 'pageNumber': page_number}
                 headers = {'X-Tableau-Auth': self.auth_token, 'Accept': 'application/xml'}
                 
@@ -231,12 +234,13 @@ class TableauClient:
         
         all_views = []
         page_number = 1
-        page_size = 100
+        page_size = TABLEAU_CONFIG.get('page_size', 100)
+        api_version = TABLEAU_CONFIG.get('api_version', '3.19')
         ns = {'t': 'http://tableau.com/api'}
         
         try:
             while True:
-                url = f"{self.server_url}/api/3.19/sites/{self.site_id}/views"
+                url = f"{self.server_url}/api/{api_version}/sites/{self.site_id}/views"
                 params = {'pageSize': page_size, 'pageNumber': page_number}
                 headers = {'X-Tableau-Auth': self.auth_token, 'Accept': 'application/xml'}
                 
@@ -304,7 +308,8 @@ class TableauClient:
             logging.error("Not authenticated. Call connect() first.")
             return None
         
-        url = f"{self.server_url}/api/3.19/sites/{self.site_id}/views/{view_id}/data"
+        api_version = TABLEAU_CONFIG.get('api_version', '3.19')
+        url = f"{self.server_url}/api/{api_version}/sites/{self.site_id}/views/{view_id}/data"
         headers = {'X-Tableau-Auth': self.auth_token}
         params = {'maxAge': max_age}
         
@@ -360,7 +365,8 @@ class TableauClient:
         if not self.auth_token:
             return
         
-        url = f"{self.server_url}/api/3.19/auth/signout"
+        api_version = TABLEAU_CONFIG.get('api_version', '3.19')
+        url = f"{self.server_url}/api/{api_version}/auth/signout"
         headers = {'X-Tableau-Auth': self.auth_token}
         
         try:

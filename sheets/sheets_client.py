@@ -197,6 +197,110 @@ class GoogleSheetsClient:
         worksheet = self.get_worksheet(spreadsheet_id, sheet_name)
         return worksheet.get(range_notation)
     
+    def write_dataframe_to_sheet(
+        self,
+        df: pd.DataFrame,
+        spreadsheet_id: str,
+        sheet_name: str,
+        start_cell: str = 'A1',
+        clear_existing: bool = True
+    ) -> bool:
+        """
+        Write a DataFrame to a Google Sheet
+        
+        Args:
+            df: DataFrame to write
+            spreadsheet_id: The Google Sheets spreadsheet ID
+            sheet_name: Name of the worksheet/tab
+            start_cell: Starting cell (e.g., 'A1')
+            clear_existing: If True, clear all existing data in the sheet first
+            
+        Returns:
+            bool: True if successful
+        """
+        try:
+            worksheet = self.get_worksheet(spreadsheet_id, sheet_name)
+            
+            # Clear existing data if requested
+            if clear_existing:
+                self.logger.info(f"Clearing existing data from '{sheet_name}'...")
+                worksheet.clear()
+            
+            # Convert DataFrame to list of lists
+            # Include headers
+            data = [df.columns.tolist()] + df.values.tolist()
+            
+            # Write data starting at start_cell
+            worksheet.update(start_cell, data)
+            
+            self.logger.info(
+                f"✅ Wrote {len(df)} rows to '{sheet_name}' "
+                f"(starting at {start_cell})"
+            )
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Error writing to '{sheet_name}': {e}")
+            return False
+    
+    def write_dict_list_to_sheet(
+        self,
+        data: List[Dict],
+        spreadsheet_id: str,
+        sheet_name: str,
+        start_cell: str = 'A1',
+        clear_existing: bool = True
+    ) -> bool:
+        """
+        Write a list of dictionaries to a Google Sheet
+        
+        Args:
+            data: List of dictionaries to write
+            spreadsheet_id: The Google Sheets spreadsheet ID
+            sheet_name: Name of the worksheet/tab
+            start_cell: Starting cell (e.g., 'A1')
+            clear_existing: If True, clear all existing data in the sheet first
+            
+        Returns:
+            bool: True if successful
+        """
+        if not data:
+            self.logger.warning("No data to write")
+            return False
+        
+        # Convert to DataFrame and write
+        df = pd.DataFrame(data)
+        return self.write_dataframe_to_sheet(
+            df, spreadsheet_id, sheet_name, start_cell, clear_existing
+        )
+    
+    def clear_sheet_range(
+        self,
+        spreadsheet_id: str,
+        sheet_name: str,
+        range_notation: str
+    ) -> bool:
+        """
+        Clear a range of cells in a worksheet
+        
+        Args:
+            spreadsheet_id: The Google Sheets spreadsheet ID
+            sheet_name: Name of the worksheet/tab
+            range_notation: A1 notation range (e.g., 'A2:Z100')
+            
+        Returns:
+            bool: True if successful
+        """
+        try:
+            worksheet = self.get_worksheet(spreadsheet_id, sheet_name)
+            worksheet.batch_clear([range_notation])
+            self.logger.info(f"Cleared range: {range_notation}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Error clearing range: {e}")
+            return False
+    
     def __enter__(self):
         """Context manager entry"""
         self.connect()

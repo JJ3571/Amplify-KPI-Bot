@@ -3,12 +3,13 @@ Support Agent Audits Data Retrieval
 Helper functions for pulling CS Agent QA data from Tableau
 """
 
-from tableau_client import TableauClient
-from config import TABLEAU_CONFIG, DATA_PATHS, GENERAL_DEFALTS
+from clients import TableauClient
+from config import TABLEAU_CONFIG, DATA_PATHS
 import pandas as pd
 from datetime import datetime, timedelta
 from pathlib import Path
 import logging
+from utils import get_last_week_dates
 
 # Workbook and View IDs
 SUPPORT_AUDITS_WORKBOOK_ID = TABLEAU_CONFIG['workbooks']['support_agent_audits']
@@ -16,22 +17,6 @@ CS_AGENT_AUDITS_VIEW_ID = TABLEAU_CONFIG['views']['cs_agent_audits']
 
 # Ensure data directories exist
 Path(DATA_PATHS['qa']).mkdir(parents=True, exist_ok=True)
-
-
-def get_last_week_dates():
-    """
-    Get the start and end dates for last week (Sunday to Saturday)
-    
-    Returns:
-        tuple: (start_date, end_date) as datetime objects
-    """
-    today = datetime.now()
-    # Find last Sunday
-    days_since_sunday = (today.weekday() + 1) % 7  # Monday = 0, Sunday = 6
-    last_sunday = today - timedelta(days=days_since_sunday + 7)
-    last_saturday = last_sunday + timedelta(days=6)
-    
-    return last_sunday, last_saturday
 
 
 def get_agent_audits_data(week_start=None, week_end=None, max_age=-1):

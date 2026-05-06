@@ -10,11 +10,11 @@ import logging
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Tuple
 
-from support_agent_audits import get_last_week_agent_scores, get_last_week_dates
-from support_services_kpi import (
+from .support_agent_audits import get_last_week_agent_scores, get_last_week_dates
+from .support_services_kpi import (
     get_csat_scores, get_response_times, get_resolution_time_data
 )
-from sla_cases import get_last_week_sla_data
+from sheets import get_last_week_sla_data
 from config import METRIC_GOALS
 
 
@@ -144,14 +144,40 @@ class KPIAggregator:
     
     def load_salesforce_data(self) -> bool:
         """
-        Load case data from Salesforce
+        Load case data from Salesforce or Google Drive CSV fallback
         
         Returns:
             bool: True if successful
         """
-        # TODO: Implement when Salesforce connection is available
-        logging.info("Salesforce data loading not yet implemented")
-        return False
+        # TODO: First try Salesforce connection if available
+        # For now, fall back to Google Drive CSVs
+        
+        logging.info("Loading Salesforce case data (checking Google Drive CSVs as fallback)...")
+        
+        try:
+            from clients import GoogleDriveImporter
+            
+            # Initialize Google Drive importer
+            importer = GoogleDriveImporter()
+            
+            # Sync all available CSV exports
+            datasets = importer.sync_all_exports()
+            
+            # Extract cases_closed and cases_transferred if available
+            if 'cases_closed' in datasets or 'cases_transferred' in datasets:
+                self.data['salesforce'] = {
+                    'cases_closed': datasets.get('cases_closed'),
+                    'cases_transferred': datasets.get('cases_transferred')
+                }
+                logging.info("✅ Loaded Salesforce case data from Google Drive CSVs")
+                return True
+            else:
+                logging.warning("No Salesforce data found in Google Drive")
+                return False
+                
+        except Exception as e:
+            logging.error(f"Failed to load Salesforce data from Google Drive: {e}")
+            return False
     
     def generate_export_qa_tab(self) -> Optional[pd.DataFrame]:
         """
@@ -444,9 +470,56 @@ class KPIAggregator:
     
     def _merge_salesforce_data(self, export_kpi: pd.DataFrame, sf_data: Dict) -> pd.DataFrame:
         """Merge Salesforce case data into export_kpi DataFrame"""
-        # TODO: Implement when Salesforce data is available
-        logging.info("Salesforce data merging not yet implemented")
-        return export_kpi
+        try:
+            # Process cases_closed
+            if 'cases_closed' in sf_data and sf_data['cases_closed'] is not None:
+                cases_closed_df = sf_data['cases_closed']
+                
+                # Look for agent/case owner column
+                agent_col = self._find_column(cases_closed_df, ['Case Owner', 'Agent Name', 'Owner', 'Name'])
+                
+                if agent_col:
+                    # Count cases by agent
+                    closed_counts = cases_closed_df.groupby(agent_col).size().reset_index()
+                    closed_counts.columns = ['Agent', 'Cases Closed Count']
+                    
+                    # Merge into export_kpi
+                    export_kpi = export_kpi.merge(closed_counts, left_on='Agent Name', right_on='Agent', how='left')
+                    
+                    # Update Cases Closed column
+                    if 'Cases Closed Count' in export_kpi.columns:
+                        export_kpi['Cases Closed'] = export_kpi['Cases Closed Count'].fillna(0).astype(int)
+                        export_kpi = export_kpi.drop(columns=['Cases Closed Count'])
+                    
+                    logging.info("✅ Merged cases closed data")
+            
+            # Process cases_transferred
+            if 'cases_transferred' in sf_data and sf_data['cases_transferred'] is not None:
+                cases_transferred_df = sf_data['cases_transferred']
+                
+                # Look for agent/case owner column
+                agent_col = self._find_column(cases_transferred_df, ['Case Owner', 'Agent Name', 'Owner', 'Name'])
+                
+                if agent_col:
+                    # Count cases by agent
+                    transferred_counts = cases_transferred_df.groupby(agent_col).size().reset_index()
+                    transferred_counts.columns = ['Agent', 'Cases Transferred Count']
+                    
+                    # Merge into export_kpi
+                    export_kpi = export_kpi.merge(transferred_counts, left_on='Agent Name', right_on='Agent', how='left')
+                    
+                    # Update Cases Transferred column
+                    if 'Cases Transferred Count' in export_kpi.columns:
+                        export_kpi['Cases Transferred'] = export_kpi['Cases Transferred Count'].fillna(0).astype(int)
+                        export_kpi = export_kpi.drop(columns=['Cases Transferred Count'])
+                    
+                    logging.info("✅ Merged cases transferred data")
+            
+            return export_kpi
+            
+        except Exception as e:
+            logging.warning(f"Could not merge Salesforce data: {e}")
+            return export_kpi
 
 
 # Standalone usage

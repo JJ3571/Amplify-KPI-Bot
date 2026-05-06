@@ -74,13 +74,13 @@ python main.py --test-tableau
 ### 4. Pull Data from Tableau
 ```python
 # QA Data (Agent Audits)
-from support_agent_audits import get_last_week_agent_scores
+from core import get_last_week_agent_scores
 
 qa_data = get_last_week_agent_scores()
 # Saves to: data/qa/QA_2025-10-12_2025-10-18.csv
 
 # KPI Data (Response Times, CSAT, etc.)
-from support_services_kpi import get_csat_scores, get_response_times
+from core import get_csat_scores, get_response_times
 
 csat = get_csat_scores()
 email_response = get_response_times('email')
@@ -94,7 +94,34 @@ phone_response = get_response_times('phone')
 
 ```
 Amplify-KPI-Bot/
-├── 📁 data/                        # All data storage
+├── 📁 clients/                     # API clients & integrations
+│   ├── tableau_client.py           # Tableau REST API client
+│   ├── salesforce_client.py        # Salesforce client
+│   ├── gdrive_importer.py          # Google Drive CSV importer
+│   └── connection_checker.py       # Connection health checker
+│
+├── 📁 sheets/                      # Google Sheets integration
+│   ├── sheets_client.py            # Google Sheets API client
+│   ├── sheets_updater.py           # Sheets data writer
+│   └── sla_cases.py                # SLA data from Sheets
+│
+├── 📁 core/                        # Core business logic
+│   ├── kpi_calculator.py           # KPI scoring engine
+│   ├── kpi_aggregator.py           # Data aggregation
+│   ├── named_functions.py          # Excel formula equivalents
+│   ├── support_agent_audits.py     # QA data retrieval
+│   ├── support_services_kpi.py     # KPI data retrieval
+│   └── data_importer.py            # CSV data processing
+│
+├── 📁 models/                      # Data models
+│   └── agent_info_manager.py       # Agent metadata manager
+│
+├── 📁 exporters/                   # Output generation
+│   ├── excel_generator.py          # Excel workbook generator
+│   ├── scorecard_generator.py      # Agent scorecard generator
+│   └── dataframe_generator.py      # Comprehensive dataframes
+│
+├── 📁 data/                        # Data storage
 │   ├── qa/                         # QA audit data from Tableau
 │   ├── kpi/                        # KPI metrics data
 │   ├── exports/                    # Other exported data
@@ -105,31 +132,23 @@ Amplify-KPI-Bot/
 │   ├── tableau_tools.py            # Unified Tableau testing/diagnostics
 │   ├── find_tableau_content.py    # Search workbooks/views
 │   ├── setup_helper.py             # Setup and dependency checker
-│   ├── final_validation.py         # System validation
+│   ├── validate_system.py          # System validation
 │   └── README.md                   # Scripts documentation
 │
-├── 📁 scorecards/                  # Generated agent scorecards
-├── 📁 results/                     # Output files
+├── 📁 examples/                    # Example files
+├── 📁 exports/                     # Export output directory
 │
-├── 🐍 Core Modules
-│   ├── main.py                     # Main application
-│   ├── config.py                   # Configuration & settings
-│   ├── tableau_client.py           # Tableau REST API client
-│   ├── support_agent_audits.py     # QA data retrieval
-│   ├── support_services_kpi.py     # KPI data retrieval
-│   ├── data_importer.py            # CSV data processing
-│   ├── named_functions.py          # Excel formula equivalents
-│   ├── kpi_calculator.py           # KPI scoring engine
-│   └── scorecard_generator.py      # Scorecard generation
-│
-├── 📄 Documentation
-│   ├── README.md                   # This file
-│   └── DOCS.md                     # Detailed technical docs
-│
-└── 📋 Config Files
-    ├── credentials.json            # API credentials (gitignored)
-    ├── requirements.txt            # Python dependencies
-    └── .gitignore                  # Git ignore rules
+├── � Root Files (Entry Points & Config)
+│   ├── app.py                      # Streamlit web interface (ENTRY POINT)
+│   ├── main.py                     # CLI entry point (ENTRY POINT)
+│   ├── update_kpi_sheets.py        # Workflow orchestrator
+│   ├── config.py                   # Global configuration & settings
+│   ├── utils.py                    # General utilities
+│   ├── README.md                   # Main documentation
+│   ├── DOCS.md                     # Detailed technical docs
+│   ├── credentials.json            # API credentials (gitignored)
+│   ├── requirements.txt            # Python dependencies
+│   └── .gitignore                  # Git ignore rules
 ```
 
 ---
@@ -151,7 +170,7 @@ Amplify-KPI-Bot/
 
 **Retrieval**:
 ```python
-from support_agent_audits import get_last_week_agent_scores
+from core import get_last_week_agent_scores
 
 # Last week's data (Sunday-Saturday)
 df = get_last_week_agent_scores()
@@ -180,7 +199,7 @@ df = get_multi_week_agent_scores(num_weeks=4)
 
 **Retrieval**:
 ```python
-from support_services_kpi import (
+from core import (
     get_csat_scores,
     get_response_times,
     get_resolution_time_data
@@ -289,26 +308,24 @@ python main.py --exports-folder exports --output results.xlsx --debug
 
 #### Pull QA Data
 ```python
-from support_agent_audits import get_last_week_agent_scores
+from core import get_last_week_agent_scores, get_agent_audits_data, get_multi_week_agent_scores
 from datetime import datetime, timedelta
 
 # Last week (automatic)
 qa_df = get_last_week_agent_scores()
 
 # Custom date range
-from support_agent_audits import get_agent_audits_data
 start = datetime(2025, 9, 1)
 end = datetime(2025, 9, 30)
 qa_df = get_agent_audits_data(week_start=start, week_end=end)
 
 # Multi-week
-from support_agent_audits import get_multi_week_agent_scores
 qa_df = get_multi_week_agent_scores(num_weeks=4)
 ```
 
 #### Pull KPI Data
 ```python
-from support_services_kpi import (
+from core import (
     get_csat_scores,
     get_response_times,
     get_resolution_time_data

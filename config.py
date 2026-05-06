@@ -7,7 +7,7 @@ Based on actual KPI system with Export-KPI and Export-QA data sources
 GOOGLE_SHEETS_SCOPES = [
     'https://spreadsheets.google.com/feeds',
     'https://www.googleapis.com/auth/drive',
-    'https://www.googleapis.com/auth/spreadsheets.readonly'
+    'https://www.googleapis.com/auth/spreadsheets'  # Full read/write access
 ]
 
 CREDENTIALS_FILE = 'credentials.json'
@@ -21,7 +21,39 @@ GOOGLE_SHEETS_CONFIG = {
         'data_start_row': 2,  # Row where data starts (after headers)
         'agent_column': 'A',  # Column with agent names
         'date_header_row': 1  # Row with date headers
+    },
+    # Temporary sheets for development
+    'temp_kpi_calculator': {
+        'spreadsheet_id': '1wT2_W_RO-BTBDTEsVf-NfAAKk9UXkiagsELlqpfGtUU',
+        'sheet_name': 'Export - KPI',  # Will be written to
+        'description': 'Temporary KPI Calculator for development'
+    },
+    'temp_agent_info': {
+        'spreadsheet_id': '1FmhHKfyPT-LwIyjnMpDfGhRNk45tn9ks1NyxXOSBQpg',
+        'sheet_name': 'Agent Info',  # Sheet to read agent metadata from
+        'description': 'Temporary Agent Info & Team Distribution for development'
+    },
+    'sla_tracker': {
+        'spreadsheet_id': '1jsQtkP1_yaSsTzWoGsUDF7J_5SyinSBTTuyX6ADMaUE',
+        'sheet_name': '3+ Day & 2+ Day SLA Tracker',
+        'description': 'SLA Tracker for cases out of SLA'
     }
+}
+
+# Google Drive folder configuration
+GOOGLE_DRIVE_CONFIG = {
+    'salesforce_csvs_folder_id': '1FX8qdAW7K4qzLledkkugbRr0a8oSXv3c',
+    'description': 'Folder containing Salesforce CSV exports'
+}
+
+# Agent Info Sheet column mappings
+AGENT_INFO_COLUMNS = {
+    'name': 'Name',  # Agent name
+    '_id': '_id',  # Internal ID
+    'team_color': 'Team',  # Team color (Orange, Purple, Rose, etc.)
+    'emp_fte_status': 'FTE Status',  # Full-time/Part-time status
+    'emp_start_date': 'Start Date',  # Employment start date
+    'emp_notes': 'Notes'  # Additional notes
 }
 
 # KPI Weights (from #Controls sheet)
@@ -49,10 +81,25 @@ METRIC_GOALS = {
     'max_score': 1.0               # D42 - 100% cap
 }
 
-GENERAL_DEFALTS = {
+GENERAL_DEFAULTS = {
     'normal_working_hours': 40.0,     # Default weekly working hours for Support agents
     'week_start_day': 'Sunday',       # Week start day for calculations
     'week_end_day': 'Saturday'        # Week end day for calculations
+}
+
+# CSV Export file patterns for data_importer
+EXPORT_FILE_PATTERNS = {
+    'time_utilization': 'time_util_export.csv',
+    'csat': 'csat_export.csv',
+    'initial_chat': 'chat_response_export.csv',
+    'initial_phone': 'phone_response_export.csv',
+    'initial_email': 'email_response_export.csv',
+    'cases_closed': 'cases_closed_export.csv',
+    'cases_transferred': 'cases_transferred_export.csv',
+    'sla_cases': 'sla_cases_export.csv',
+    'qa_scores': 'qa_scores_export.csv',
+    'qa_bcf': 'qa_bcf_export.csv',
+    'qa_case_count': 'qa_case_count_export.csv'
 }
 
 # Data storage paths
@@ -116,6 +163,8 @@ TEAM_COLORS = {
 TABLEAU_CONFIG = {
     'server_url': 'https://10az.online.tableau.com',
     'site_name': 'amplify',
+    'api_version': '3.19',  # Tableau REST API version
+    'page_size': 100,        # Number of records per page for pagination
     
     # Workbook IDs
     'workbooks': {
@@ -142,4 +191,13 @@ TABLEAU_CONFIG = {
     # Legacy mappings (kept for backward compatibility)
     'view_mappings': {},
     'view_ids': {}
+}
+
+# Performance rating thresholds (for KPI score interpretation)
+PERFORMANCE_THRESHOLDS = {
+    'excellent': 90,       # 90%+
+    'good': 80,            # 80-89%
+    'average': 70,         # 70-79%
+    'below_average': 60,   # 60-69%
+    'needs_improvement': 59, # 50-59%
 }

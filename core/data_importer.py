@@ -79,7 +79,10 @@ class DataImporter:
                     break
         
         if len(col_mapping) < len(required_cols):
-            logging.warning(f"Missing columns in time utilization data. Found: {list(col_mapping.values())}")
+            missing = [col for col in required_cols if col not in col_mapping]
+            logging.warning(f"Missing required columns in time utilization data: {missing}")
+            logging.warning(f"Found columns: {list(df.columns)}")
+            raise ValueError(f"Missing required columns: {missing}")
         
         # Standardize column names
         df_clean = df.rename(columns={v: k for k, v in col_mapping.items()})
@@ -116,6 +119,14 @@ class DataImporter:
         # Expected columns: Agent Name, Total Responses, Positive Responses (4-5 rating)
         df.columns = df.columns.str.strip()
         
+        # Validate required columns exist
+        required_cols = ['Name']
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        if missing_cols:
+            logging.error(f"Missing required columns in CSAT data: {missing_cols}")
+            logging.error(f"Available columns: {list(df.columns)}")
+            raise ValueError(f"Missing required columns: {missing_cols}")
+        
         # Clean agent names
         if 'Name' in df.columns:
             df['Name'] = df['Name'].str.strip()
@@ -141,6 +152,12 @@ class DataImporter:
         """
         df.columns = df.columns.str.strip()
         
+        # Validate Name column exists
+        if 'Name' not in df.columns:
+            logging.error(f"Missing 'Name' column in {response_type} response time data")
+            logging.error(f"Available columns: {list(df.columns)}")
+            raise ValueError(f"Missing required 'Name' column in {response_type} response time data")
+        
         # Clean agent names
         if 'Name' in df.columns:
             df['Name'] = df['Name'].str.strip()
@@ -151,6 +168,11 @@ class DataImporter:
             if 'response' in col.lower() or 'time' in col.lower():
                 time_col = col
                 break
+        
+        if time_col:
+            logging.debug(f"Found {response_type} response time column: {time_col}")
+        else:
+            logging.warning(f"No response time column found in {response_type} data")
         
         if time_col:
             # Convert to numeric, handling various formats

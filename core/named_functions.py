@@ -33,11 +33,16 @@ class NamedFunctions:
         try:
             agent_row = self.data[self.data['Name'] == agent_name]
             if agent_row.empty:
+                logging.debug(f"Agent '{agent_name}' not found in data")
                 return 0
             
             closed_cases = agent_row['closed_cases'].iloc[0] if 'closed_cases' in agent_row else 0
             return int(closed_cases) if pd.notna(closed_cases) else 0
-        except Exception:
+        except KeyError as e:
+            logging.warning(f"Missing column 'closed_cases' in data: {e}")
+            return 0
+        except Exception as e:
+            logging.error(f"Error getting cases_closed for agent '{agent_name}': {e}")
             return 0
     
     def cases_transferred(self, agent_name):
@@ -54,11 +59,16 @@ class NamedFunctions:
         try:
             agent_row = self.data[self.data['Name'] == agent_name]
             if agent_row.empty:
+                logging.debug(f"Agent '{agent_name}' not found in data")
                 return 0
             
             transferred_cases = agent_row['transferred_cases'].iloc[0] if 'transferred_cases' in agent_row else 0
             return int(transferred_cases) if pd.notna(transferred_cases) else 0
-        except Exception:
+        except KeyError as e:
+            logging.warning(f"Missing column 'transferred_cases' in data: {e}")
+            return 0
+        except Exception as e:
+            logging.error(f"Error getting cases_transferred for agent '{agent_name}': {e}")
             return 0
     
     def cases_out_of_sla(self, agent_name):
@@ -75,11 +85,16 @@ class NamedFunctions:
         try:
             agent_row = self.data[self.data['Name'] == agent_name]
             if agent_row.empty:
+                logging.debug(f"Agent '{agent_name}' not found in data")
                 return 0
             
             sla_cases = agent_row['sla_cases'].iloc[0] if 'sla_cases' in agent_row else 0
             return int(sla_cases) if pd.notna(sla_cases) else 0
-        except Exception:
+        except KeyError as e:
+            logging.warning(f"Missing column 'sla_cases' in data: {e}")
+            return 0
+        except Exception as e:
+            logging.error(f"Error getting cases_out_of_sla for agent '{agent_name}': {e}")
             return 0
     
     def cases_per_hour(self, agent_name):
@@ -96,6 +111,7 @@ class NamedFunctions:
         try:
             agent_row = self.data[self.data['Name'] == agent_name]
             if agent_row.empty:
+                logging.debug(f"Agent '{agent_name}' not found in data")
                 return 0.0
             
             closed_cases = self.cases_closed(agent_name)
@@ -109,7 +125,11 @@ class NamedFunctions:
                 return round(cph, 3)
             else:
                 return 0.0
-        except Exception:
+        except (ZeroDivisionError, ValueError) as e:
+            logging.warning(f"Error calculating cases_per_hour for agent '{agent_name}': {e}")
+            return 0.0
+        except Exception as e:
+            logging.error(f"Unexpected error in cases_per_hour for agent '{agent_name}': {e}")
             return 0.0
     
     def csat_scores(self, agent_name):
@@ -126,6 +146,7 @@ class NamedFunctions:
         try:
             agent_row = self.data[self.data['Name'] == agent_name]
             if agent_row.empty:
+                logging.debug(f"Agent '{agent_name}' not found, defaulting CSAT to 100%")
                 return 1.0  # Default to 100% if no CSAT data
             
             total_responses = agent_row['Total Responses'].iloc[0] if 'Total Responses' in agent_row else 0
@@ -136,7 +157,11 @@ class NamedFunctions:
             
             csat_rate = positive_responses / total_responses
             return round(csat_rate, 4)
-        except Exception:
+        except (ZeroDivisionError, ValueError) as e:
+            logging.warning(f"Error calculating CSAT for agent '{agent_name}': {e}")
+            return 1.0
+        except Exception as e:
+            logging.error(f"Unexpected error in csat_scores for agent '{agent_name}': {e}")
             return 1.0
     
     def initial_response_chat(self, agent_name):
@@ -157,7 +182,11 @@ class NamedFunctions:
             
             chat_response = agent_row['chat_response_time'].iloc[0] if 'chat_response_time' in agent_row else None
             return float(chat_response) if pd.notna(chat_response) else None
-        except Exception:
+        except (ValueError, TypeError) as e:
+            logging.warning(f"Error converting chat_response_time for agent '{agent_name}': {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error in initial_response_chat for agent '{agent_name}': {e}")
             return None
     
     def initial_response_email(self, agent_name):
@@ -178,7 +207,11 @@ class NamedFunctions:
             
             email_response = agent_row['email_response_time'].iloc[0] if 'email_response_time' in agent_row else None
             return float(email_response) if pd.notna(email_response) else None
-        except Exception:
+        except (ValueError, TypeError) as e:
+            logging.warning(f"Error converting email_response_time for agent '{agent_name}': {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error in initial_response_email for agent '{agent_name}': {e}")
             return None
     
     def initial_response_phone(self, agent_name):
@@ -199,7 +232,11 @@ class NamedFunctions:
             
             phone_response = agent_row['phone_response_time'].iloc[0] if 'phone_response_time' in agent_row else None
             return float(phone_response) if pd.notna(phone_response) else None
-        except Exception:
+        except (ValueError, TypeError) as e:
+            logging.warning(f"Error converting phone_response_time for agent '{agent_name}': {e}")
+            return None
+        except Exception as e:
+            logging.error(f"Unexpected error in initial_response_phone for agent '{agent_name}': {e}")
             return None
     
     def time_utilization(self, agent_name):
@@ -216,11 +253,16 @@ class NamedFunctions:
         try:
             agent_row = self.data[self.data['Name'] == agent_name]
             if agent_row.empty:
+                logging.debug(f"Agent '{agent_name}' not found in data")
                 return 0.0
             
             time_util = agent_row['Time Utilization Percent'].iloc[0] if 'Time Utilization Percent' in agent_row else 0.0
             return float(time_util) if pd.notna(time_util) else 0.0
-        except Exception:
+        except KeyError as e:
+            logging.warning(f"Missing column 'Time Utilization Percent' in data: {e}")
+            return 0.0
+        except Exception as e:
+            logging.error(f"Error getting time_utilization for agent '{agent_name}': {e}")
             return 0.0
     
     def working_hours(self, agent_name):
@@ -237,6 +279,7 @@ class NamedFunctions:
         try:
             agent_row = self.data[self.data['Name'] == agent_name]
             if agent_row.empty:
+                logging.debug(f"Agent '{agent_name}' not found in data")
                 return 0.0
             
             total_hours = agent_row['Total Hours Worked'].iloc[0] if 'Total Hours Worked' in agent_row else 0.0
@@ -247,7 +290,11 @@ class NamedFunctions:
                 return round(working_hrs, 6)
             else:
                 return 0.0
-        except Exception:
+        except (ValueError, TypeError) as e:
+            logging.warning(f"Error calculating working_hours for agent '{agent_name}': {e}")
+            return 0.0
+        except Exception as e:
+            logging.error(f"Unexpected error in working_hours for agent '{agent_name}': {e}")
             return 0.0
     
     def qa_bcf_percentage(self, agent_name):
@@ -264,11 +311,16 @@ class NamedFunctions:
         try:
             agent_row = self.data[self.data['Name'] == agent_name]
             if agent_row.empty:
+                logging.debug(f"Agent '{agent_name}' not found in data")
                 return 0.0
             
             bcf_pct = agent_row['bcf_percentage'].iloc[0] if 'bcf_percentage' in agent_row else 0.0
             return float(bcf_pct) if pd.notna(bcf_pct) else 0.0
-        except Exception:
+        except KeyError as e:
+            logging.warning(f"Missing column 'bcf_percentage' in data: {e}")
+            return 0.0
+        except Exception as e:
+            logging.error(f"Error getting qa_bcf_percentage for agent '{agent_name}': {e}")
             return 0.0
     
     def qa_cases_audited(self, agent_name):
@@ -285,11 +337,16 @@ class NamedFunctions:
         try:
             agent_row = self.data[self.data['Name'] == agent_name]
             if agent_row.empty:
+                logging.debug(f"Agent '{agent_name}' not found in data")
                 return 0
             
             cases_audited = agent_row['qa_cases_audited'].iloc[0] if 'qa_cases_audited' in agent_row else 0
             return int(cases_audited) if pd.notna(cases_audited) else 0
-        except Exception:
+        except KeyError as e:
+            logging.warning(f"Missing column 'qa_cases_audited' in data: {e}")
+            return 0
+        except Exception as e:
+            logging.error(f"Error getting qa_cases_audited for agent '{agent_name}': {e}")
             return 0
     
     def qa_score(self, agent_name):
@@ -306,11 +363,16 @@ class NamedFunctions:
         try:
             agent_row = self.data[self.data['Name'] == agent_name]
             if agent_row.empty:
+                logging.debug(f"Agent '{agent_name}' not found, defaulting QA score to 100")
                 return 100.0  # Default to 100 if no QA data
             
             qa_score = agent_row['qa_score'].iloc[0] if 'qa_score' in agent_row else 100.0
             return float(qa_score) if pd.notna(qa_score) else 100.0
-        except Exception:
+        except KeyError as e:
+            logging.warning(f"Missing column 'qa_score' in data: {e}")
+            return 100.0
+        except Exception as e:
+            logging.error(f"Error getting qa_score for agent '{agent_name}': {e}")
             return 100.0
     
     def get_agent_metrics(self, agent_name):

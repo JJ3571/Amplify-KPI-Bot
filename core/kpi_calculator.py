@@ -6,7 +6,7 @@ Includes sophisticated weighted scoring with conditional logic for missing metri
 import pandas as pd
 import numpy as np
 from config import DEFAULT_WEIGHTS, METRIC_GOALS
-from named_functions import NamedFunctions
+from .named_functions import NamedFunctions
 import logging
 
 class AmplifyKPICalculator:
@@ -216,24 +216,29 @@ class AmplifyKPICalculator:
         }
         
         # Calculate weighted score using complex conditional logic from Excel
+        # This matches the Excel formula SCORE_FINAL_WEIGHTED which handles missing metrics
         weighted_sum = 0.0
         
+        # ALWAYS INCLUDE (have data or get 0):
         # Time Utilization (always included if has working hours)
         weighted_sum += scores['time_utilization_score'] * self.weights['time_utilization']
         
-        # Cases Per Hour
+        # Cases Per Hour (always has data if working hours > 0)
         weighted_sum += scores['cph_score'] * self.weights['cases_per_hour']
         
-        # Initial Response Times - Complex conditional weighting
+        # CONDITIONAL WEIGHTING for Initial Response Times
+        # Strategy: If a response metric is missing, redistribute its weight to available metrics
+        # This ensures the total weighting always equals 1.0 regardless of data availability
         chat_score = scores['initial_chat_score']
         phone_score = scores['initial_phone_score']
         email_score = scores['initial_email_score']
         
-        # Count available response metrics
+        # Count available response metrics (None values indicate missing data)
         available_responses = [s for s in [chat_score, phone_score, email_score] if s is not None]
         
         if len(available_responses) == 1:
-            # Only one response type available - gets all response weight
+            # SCENARIO 1: Only one response type available
+            # The single available metric gets ALL of the response weight (5% + 2.5% + 2.5% = 10%)
             total_response_weight = (self.weights['initial_chat'] + 
                                    self.weights['initial_phone'] + 
                                    self.weights['initial_email'])
@@ -246,36 +251,47 @@ class AmplifyKPICalculator:
                 weighted_sum += email_score * total_response_weight
                 
         elif len(available_responses) == 2:
-            # Two response types available - redistribute missing weight
+            # SCENARIO 2: Two response types available
+            # Redistribute the missing metric's weight equally between the two available metrics
+            # Each available metric gets its own weight + half of the missing metric's weight
+            
             if chat_score is not None and phone_score is not None:
                 # Chat and Phone available, Email missing
+                # Chat gets: 5% (own) + 2.5% (half of email's 5%) = 7.5%
+                # Phone gets: 2.5% (own) + 2.5% (half of email's 5%) = 5%
                 weighted_sum += (chat_score * (self.weights['initial_chat'] + 
                                               self.weights['initial_email'] * 0.5))
                 weighted_sum += (phone_score * (self.weights['initial_phone'] + 
                                                self.weights['initial_email'] * 0.5))
             elif chat_score is not None and email_score is not None:
                 # Chat and Email available, Phone missing
+                # Chat gets: 5% (own) + 1.25% (half of phone's 2.5%) = 6.25%
+                # Email gets: 2.5% (own) + 1.25% (half of phone's 2.5%) = 3.75%
                 weighted_sum += (chat_score * (self.weights['initial_chat'] + 
                                               self.weights['initial_phone'] * 0.5))
                 weighted_sum += (email_score * (self.weights['initial_email'] + 
                                                self.weights['initial_phone'] * 0.5))
             elif phone_score is not None and email_score is not None:
                 # Phone and Email available, Chat missing
+                # Phone gets: 2.5% (own) + 2.5% (half of chat's 5%) = 5%
+                # Email gets: 2.5% (own) + 2.5% (half of chat's 5%) = 5%
                 weighted_sum += (phone_score * (self.weights['initial_phone'] + 
                                                self.weights['initial_chat'] * 0.5))
                 weighted_sum += (email_score * (self.weights['initial_email'] + 
                                                self.weights['initial_chat'] * 0.5))
                 
         elif len(available_responses) == 3:
-            # All three response types available - use standard weights
+            # SCENARIO 3: All three response types available
+            # Use standard weights: Chat 5%, Phone 2.5%, Email 2.5%
             weighted_sum += chat_score * self.weights['initial_chat']
             weighted_sum += phone_score * self.weights['initial_phone']
             weighted_sum += email_score * self.weights['initial_email']
         
+        # ALWAYS INCLUDE (these always have data or get 0):
         # SLA Cases
         weighted_sum += scores['sla_score'] * self.weights['sla_cases']
         
-        # QA Score
+        # QA Score (always has data, defaults to 100 if missing)
         weighted_sum += scores['qa_score'] * self.weights['qa_score']
         
         scores['final_weighted_score'] = weighted_sum

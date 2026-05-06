@@ -9,9 +9,9 @@ import json
 from typing import Dict, Tuple
 
 # Import clients
-from tableau_client import TableauClient
-from sheets_client import GoogleSheetsClient
-from salesforce_client import SalesforceClient
+from .tableau_client import TableauClient
+from sheets import GoogleSheetsClient
+from .salesforce_client import SalesforceClient
 from config import TABLEAU_CONFIG, GOOGLE_SHEETS_CONFIG
 
 
