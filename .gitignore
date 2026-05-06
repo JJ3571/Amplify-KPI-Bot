@@ -1,3 +1,11 @@
+# Manual additions
+credentials.json
+/examples
+/data/archive/*
+/data/exports/*
+/data/kpi/*
+/data/qa/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
